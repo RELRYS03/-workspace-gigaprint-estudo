@@ -1,8 +1,9 @@
 import './style.css';
+import {drawOrnament} from './ornament-preview.js';
 import {defaults, shapes, makeModel, contains, validate} from './geometry.js';
 
 const form=document.querySelector('#editor'), canvas=document.querySelector('#preview'), notice=document.querySelector('#notice');
-const context=canvas.getContext('2d'), download=document.querySelector('#download');
+const download=document.querySelector('#download'), zipDownload=document.querySelector('#download-zip');
 const editOrnament=document.querySelector('#edit-ornament');
 const d=defaults;
 const options=(name,items,selected,css='')=>`<div class="segments ${css}" role="group" aria-label="${name}">${Object.entries(items).map(([id,label])=>`<label><input type="radio" name="${name}" value="${id}" ${id===selected?'checked':''}>${label}</label>`).join('')}</div>`;
@@ -91,50 +92,60 @@ function buildMotif(s) {
   };
 }
 
-let yaw=-.25, drag=null;
-function draw() {
-  const {width:w,height:h}=canvas, c=context;
-  c.clearRect(0,0,w,h);
-  const backdrop=c.createLinearGradient(0,0,0,h);
-  backdrop.addColorStop(0,'#f1f3ec');backdrop.addColorStop(1,'#e2e8dd');
-  c.fillStyle=backdrop;c.fillRect(0,0,w,h);
-  c.strokeStyle='#d5ddd2';c.lineWidth=1;
-  for(let i=-h;i<w+h;i+=43) {
-    c.beginPath();c.moveTo(i,h);c.lineTo(w/2+(i-w/2)*.5,h*.45);c.stroke();
-  }
-  for(let y=h*.46;y<h;y+=37) {c.beginPath();c.moveTo(0,y);c.lineTo(w,y);c.stroke();}
-  if(!model) return;
-  const {n,body,flat,heights}=model;
-  function piece(cx,cy,r,kind) {
-    const points=[];
-    const scale=2.32*r/n, angle=kind==='flat'?0:yaw;
-    for(let row=0;row<n;row++) for(let col=0;col<n;col++) {
-      const i=row*n+col, x=(col+.5-n/2)*scale, y=(row+.5-n/2)*scale;
-      let type=kind==='flat'?flat[i]:body[i];
-      if(kind==='press') type=Math.hypot(x,y)<1.05*r?5:0;
-      if(kind==='back'&&state.back==='plain'&&type===2) type=1;
-      if(!type) continue;
-      const z=kind==='flat'?0:heights[i]*r/(state.size/2)*(kind==='back'?-.7:1);
-      const px=Math.cos(angle)*x+Math.sin(angle)*z;
-      const pz=-Math.sin(angle)*x+Math.cos(angle)*z;
-      points.push([cx+px,cy+y*.88-pz*.46,pz+y*.12,type]);
-    }
-    points.sort((a,b)=>a[2]-b[2]);
-    const colors=['',state.lattice,state.design,state.lattice,state.lattice,state.mold];
-    for(const [x,y,z,type] of points) {
-      c.globalAlpha=.78+Math.max(0,Math.min(.22,z/r*.6));
-      c.fillStyle=colors[type];c.fillRect(x,y,scale+1,scale+1);
-    }
-    c.globalAlpha=1;
-  }
-  if(view==='combo') {
-    piece(w*.68,h*.60,w*.21,'press');piece(w*.36,h*.45,w*.27,'formed');
-  } else if(view==='ornament') {
-    piece(w*.53,h*.54,w*.30,'back');piece(w*.49,h*.49,w*.29,'formed');
-  } else {
-    piece(w*.5,h*.51,w*.31,view==='mold'?'press':view);
-  }
+const cameraPresets={iso:[-.26,.56],front:[0,0],top:[0,Math.PI/2],side:[Math.PI/2,0]};
+let [yaw,pitch]=cameraPresets.iso, zoom=1, drag=null;
+const wire=document.querySelector('#view-wire'), ids=document.querySelector('#show-ids');
+const reference=document.querySelector('#show-scale'), plate=document.querySelector('#view-plate');
+const preset=document.querySelector('#printer-preset'), bedFields=['x','y','z'].map(axis=>document.querySelector('#bed-'+axis));
+const margin=document.querySelector('#bed-margin'), bedFit=document.querySelector('#bed-fit');
+const pressed=button=>button.getAttribute('aria-pressed')==='true';
+function draw(){
+  const bounds=canvas.getBoundingClientRect();
+  if(!bounds.width||!bounds.height) return;
+  const width=Math.round(bounds.width),height=Math.round(bounds.height);
+  if(canvas.width!==width||canvas.height!==height){canvas.width=width;canvas.height=height;}
+  drawOrnament(canvas,model,state,{yaw,pitch,zoom,view:pressed(plate)?'plate':view,
+    wire:pressed(wire),ids:pressed(ids),reference:pressed(reference),
+    bed:bedFields.map(field=>Math.min(1200,Math.max(20,field.valueAsNumber||256)))});
 }
+function refreshFit(){
+  const bed=bedFields.map(field=>field.valueAsNumber), gap=margin.valueAsNumber;
+  const valid=bed.every(value=>Number.isFinite(value)&&value>0)&&Number.isFinite(gap)&&gap>=0;
+  const fit=valid&&model&&Math.min(...bed.slice(0,2))-gap*2>=state.size*1.08&&bed[2]>=state.size*state.depth/200+6;
+  bedFit.dataset.fit=String(Boolean(fit));
+  bedFit.textContent=!valid?'Informe dimensões positivas e uma margem válida.':!model?'':fit
+    ?'As peças cabem individualmente na mesa.':'Uma ou mais peças excedem a área útil da impressora.';
+}
+preset.addEventListener('change',()=>{
+  if(preset.value!=='custom') for(const field of bedFields) field.value=preset.value;
+  refreshFit();draw();
+});
+for(const field of bedFields) field.addEventListener('input',()=>{preset.value='custom';refreshFit();draw();});
+margin.addEventListener('input',refreshFit);
+const cameras=[...document.querySelectorAll('[data-camera]')];
+function activateCamera(button){
+  [yaw,pitch]=cameraPresets[button.dataset.camera];
+  for(const camera of cameras) camera.setAttribute('aria-pressed',String(camera===button));
+  draw();
+}
+for(const button of cameras) button.addEventListener('click',()=>activateCamera(button));
+document.querySelector('#view-fit').addEventListener('click',()=>{zoom=1;activateCamera(cameras[0]);});
+for(const button of [wire,ids,reference,plate]) button.addEventListener('click',()=>{
+  button.setAttribute('aria-pressed',String(!pressed(button)));draw();
+});
+const help=document.querySelector('#view-help');
+help.addEventListener('click',()=>{
+  const hint=document.querySelector('#camera-help');
+  hint.hidden=!hint.hidden;help.setAttribute('aria-expanded',String(!hint.hidden));
+});
+const sidebarToggle=document.querySelector('#sidebar-toggle');
+sidebarToggle.addEventListener('click',()=>{
+  const collapsed=document.querySelector('.bench-layout').classList.toggle('is-collapsed');
+  sidebarToggle.setAttribute('aria-expanded',String(!collapsed));
+  sidebarToggle.setAttribute('aria-label',collapsed?'Expandir configuração':'Recolher configuração');
+  sidebarToggle.textContent=collapsed?'›':'‹';
+});
+new ResizeObserver(draw).observe(canvas);
 function update() {
   queued=false;
   const next=readState();
@@ -143,11 +154,11 @@ function update() {
   document.querySelector('#custom-image').hidden=next.motif!=='image';
   for(const output of form.querySelectorAll('[data-out]')) output.value=next[output.dataset.out]+(output.dataset.out==='threshold'?'':'%');
   const invalid=validate(next)||(next.motif==='image'&&!image?(imageError||'Selecione uma imagem para gerar o desenho.'):'');
-  editOrnament.disabled=download.disabled=Boolean(invalid)||working;
+  editOrnament.disabled=download.disabled=zipDownload.disabled=Boolean(invalid)||working;
   if(!working) notice.textContent=invalid;
   document.querySelector('#dimensions').textContent=Number.isFinite(next.size)?`${next.size} mm`:'';
-  if(invalid) { model=null;draw();return; }
-  state=next;motifMask=buildMotif(state);model=makeModel(state,motifMask,110);draw();
+  if(invalid) { model=null;refreshFit();draw();return; }
+  state=next;motifMask=buildMotif(state);model=makeModel(state,motifMask,110);refreshFit();draw();
 }
 function schedule() {if(!queued){queued=true;requestAnimationFrame(update);}}
 form.addEventListener('input',schedule);
@@ -162,16 +173,25 @@ form.elements.image.addEventListener('change',async event=>{
   } catch {if(event.target.files[0]===file) imageError='Não foi possível abrir a imagem.';}
   finally {URL.revokeObjectURL(url);schedule();}
 });
-document.querySelector('#views').addEventListener('change',event=>{view=event.target.value;draw();});
-canvas.addEventListener('pointerdown',event=>{drag=event.clientX;canvas.setPointerCapture(event.pointerId);});
+document.querySelector('#views').addEventListener('change',event=>{view=event.target.value;plate.setAttribute('aria-pressed','false');draw();});
+canvas.addEventListener('pointerdown',event=>{drag=[event.clientX,event.clientY];canvas.setPointerCapture(event.pointerId);});
 canvas.addEventListener('pointermove',event=>{
   if(drag===null) return;
-  yaw+=(event.clientX-drag)*.009;drag=event.clientX;draw();
+  yaw+=(event.clientX-drag[0])*.009;
+  pitch=Math.max(-1.45,Math.min(1.55,pitch+(event.clientY-drag[1])*.009));
+  drag=[event.clientX,event.clientY];
+  for(const camera of cameras) camera.setAttribute('aria-pressed','false');
+  draw();
 });
 for(const event of ['pointerup','pointercancel','lostpointercapture']) canvas.addEventListener(event,()=>{drag=null;});
-function generate(edit=false){
+canvas.addEventListener('wheel',event=>{
+  event.preventDefault();
+  zoom=Math.min(3,Math.max(.4,zoom*Math.exp(-event.deltaY*.0015)));draw();
+},{passive:false});
+function generate(mode='3mf'){
+  const edit=mode==='edit';
   if(!model||working) return;
-  working=true;editOrnament.disabled=download.disabled=true;notice.textContent=edit?'Preparando as peças…':'Gerando o arquivo 3MF…';
+  working=true;editOrnament.disabled=download.disabled=zipDownload.disabled=true;notice.textContent=edit?'Preparando as peças…':'Gerando o arquivo…';
   const current=state, motif=motifMask;
   const raster=new Uint8Array(256**2);
   for(let y=0;y<256;y++) for(let x=0;x<256;x++) raster[y*256+x]=Number(motif((x+.5)/128-1,(y+.5)/128-1));
@@ -184,13 +204,14 @@ function generate(edit=false){
       dispatchEvent(new CustomEvent('ornament-mesh',{detail:data.parts}));
       return;
     }
-    const url=URL.createObjectURL(new Blob([data.bytes],{type:'model/3mf'}));
-    const link=document.createElement('a');link.href=url;link.download=`enfeite-${current.shape}-${current.size}mm.3mf`;link.click();
-    setTimeout(()=>URL.revokeObjectURL(url),1000);finish('Arquivo 3MF gerado.');
+    const url=URL.createObjectURL(new Blob([data.bytes],{type:mode==='zip'?'application/zip':'model/3mf'}));
+    const link=document.createElement('a');link.href=url;link.download=`enfeite-${current.shape}-${current.size}mm.${mode}`;link.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);finish('Arquivo gerado.');
   };
   worker.onerror=()=>finish('Falha ao iniciar o exportador.');
-  worker.postMessage({state:current,raster,edit},[raster.buffer]);
+  worker.postMessage({state:current,raster,edit,zip:mode==='zip'},[raster.buffer]);
 }
 download.addEventListener('click',()=>generate());
-editOrnament.addEventListener('click',()=>generate(true));
+editOrnament.addEventListener('click',()=>generate('edit'));
+zipDownload.addEventListener('click',()=>generate('zip'));
 update();

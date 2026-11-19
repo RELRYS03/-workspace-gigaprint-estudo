@@ -44,3 +44,9 @@ Abra **Editor de malhas** para criar um cubo, cilindro ou esfera, ou importar um
 **mesh.js** lê e grava malhas e aplica a escala aos vértices. **solid.js** usa Manifold (WebAssembly) para criar sólidos e fechar as faces do corte. **mesh-editor.js** controla a seleção, a prévia e o histórico de desfazer. A prévia usa amostragem para modelos grandes. A exportação usa todos os triângulos.
 
 O corte exige uma malha fechada e orientada. A importação 3MF lê as malhas e instâncias da mesa com suas transformações. O 3MF exportado inclui a geometria e uma cor por objeto. Perfis de fatiamento, texturas, cores por triângulo e suportes do arquivo de origem ficam fora do novo arquivo. A edição atua sobre a malha triangulada e inclui escala e corte plano.
+
+## Bancada de enfeites
+
+Os controles ficam no painel esquerdo e a prévia ocupa a área central. Use **3D**, **Frente**, **Topo** ou **Lado** para trocar a câmera. Arraste sobre o modelo para girá-lo e use a roda para ajustar o zoom. **Arame**, **IDs** e **Ref. escala** alternam informações da prévia. No celular, a prévia vem antes do formulário.
+
+A impressora selecionada define a grade da mesa e a verificação de tamanho. O aviso avalia se cada peça cabe individualmente com a margem indicada. A visualização da mesa não otimiza o posicionamento das peças nem substitui o fatiador. O download ZIP inclui o 3MF colorido e um STL por peça.

@@ -2,16 +2,41 @@
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Oficina de enfeites 3D</title></head>
 <body>
-<header class="top"><span class="mark" aria-hidden="true">✦</span><strong>Oficina 3D</strong><nav aria-label="Ferramentas"><a href="#ornament">Enfeites</a><a href="#mesh">Editor de malhas</a></nav></header>
-<main id="ornament">
-  <header class="intro"><div><h1>Enfeites de Natal</h1><p>Desenhe um enfeite de malha e o molde para dar forma às duas metades.</p></div><div class="actions"><button id="edit-ornament" type="button">Editar peças</button><button id="download" type="button">Baixar 3MF <span aria-hidden="true">↓</span></button></div></header>
-  <div class="workspace">
-    <section class="viewer" aria-label="Prévia do projeto">
-      <div class="view-top"><strong>Prévia</strong><span id="dimensions"></span></div>
-      <canvas id="preview" width="840" height="710" aria-label="Visualização do enfeite e do molde"></canvas>
+<header class="top"><a class="brand" href="#ornament"><span class="mark" aria-hidden="true"><i></i><i></i><i></i></span><strong>Oficina 3D</strong></a><nav aria-label="Ferramentas"><a href="#ornament">Enfeites</a><a href="#mesh">Editor de malhas</a></nav></header>
+<main id="ornament" class="bench">
+  <div class="bench-layout">
+    <aside id="ornament-sidebar" class="bench-sidebar" aria-label="Configuração do enfeite">
+      <header class="bench-intro"><div class="ornament-symbol" aria-hidden="true">✳</div><h1>Enfeites de<br>Natal</h1><p>Imprima um disco de malha com seu desenho. Aqueça e pressione com o molde impresso para formar cada metade do enfeite.</p></header>
+      <section class="printer" aria-labelledby="printer-title">
+        <h2 id="printer-title">Impressora</h2>
+        <label class="field"><span class="sr-only">Modelo da impressora</span><select id="printer-preset"><option value="256">Bambu Lab A1 — 256 × 256 × 256 mm</option><option value="180">Bambu Lab A1 mini — 180 × 180 × 180 mm</option><option value="custom">Dimensões personalizadas</option></select></label>
+        <div class="bed-grid">
+          <label class="field">Largura (X)<small>mm</small><input id="bed-x" type="number" min="1" value="256"></label>
+          <label class="field">Profundidade (Y)<small>mm</small><input id="bed-y" type="number" min="1" value="256"></label>
+          <label class="field">Altura (Z)<small>mm</small><input id="bed-z" type="number" min="1" value="256"></label>
+        </div>
+        <details><summary>Margem de segurança</summary><label class="field">Margem por lado (mm)<input id="bed-margin" type="number" min="0" value="2"></label></details>
+        <p id="bed-fit" class="tip" role="status"></p>
+      </section>
       <div id="views" class="segments"></div>
+      <form id="editor" novalidate></form>
+    </aside>
+    <section class="bench-stage" aria-label="Prévia do projeto">
+      <div class="bench-viewport">
+        <canvas id="preview" width="840" height="710" aria-label="Visualização do enfeite e do molde"></canvas>
+        <div class="bench-topbar"><strong id="dimensions"></strong><div class="camera-tools" aria-label="Controles da câmera">
+          <div class="camera-views"><button type="button" data-camera="iso" aria-pressed="true">3D</button><button type="button" data-camera="front" aria-pressed="false">Frente</button><button type="button" data-camera="top" aria-pressed="false">Topo</button><button type="button" data-camera="side" aria-pressed="false">Lado</button></div>
+          <button id="view-wire" type="button" aria-pressed="false">Arame</button><button id="view-fit" type="button">Ajustar</button><button id="view-help" type="button" aria-expanded="false" aria-controls="camera-help">Controles</button>
+        </div></div>
+        <p id="camera-help" hidden>Arraste para girar. Use a roda do mouse sobre a prévia para aproximar ou afastar.</p>
+        <div class="bench-overlays"><button id="show-ids" type="button" aria-pressed="false">IDs</button><button id="show-scale" type="button" aria-pressed="true">Ref. escala</button></div>
+      </div>
+      <button id="sidebar-toggle" type="button" aria-controls="ornament-sidebar" aria-expanded="true" aria-label="Recolher configuração">‹</button>
+      <footer class="bench-footer">
+        <strong>Enfeite de Natal</strong>
+        <div class="actions"><button id="view-plate" type="button" aria-pressed="false">Mesa de impressão</button><button id="edit-ornament" type="button">Editar peças</button><button id="download" type="button">3MF colorido</button><button id="download-zip" type="button">Baixar 3MF + STLs (.zip)</button></div>
+      </footer>
     </section>
-    <form id="editor" novalidate></form>
   </div>
   <p id="notice" role="status" aria-live="polite"></p>
 </main>
