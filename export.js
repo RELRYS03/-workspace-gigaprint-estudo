@@ -55,11 +55,14 @@ export function printableParts(model,s) {
     ['Molde macho',s.mold,0,1,press(false)],['Molde fêmea',s.mold,1,1,press(true)]
   ].map(([name,color,x,y,test])=>({name,color,x:x*n*step,y:y*n*step,...voxelMesh(n,mz,step,layer,test)})).filter(p=>p.triangles.length);
 }
+const escapeXml=value=>value.replace(/[&<>"']/g, character=>({
+  '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&apos;'
+}[character]));
 export function export3mf(parts) {
-  const object=(p,i)=>`<object id="${i+2}" name="${p.name}" type="model" pid="1" pindex="${i}"><mesh><vertices>${p.vertices.map(([x,y,z])=>`<vertex x="${x.toFixed(4)}" y="${y.toFixed(4)}" z="${z.toFixed(4)}"/>`).join('')}</vertices><triangles>${p.triangles.map(([a,b,c])=>`<triangle v1="${a}" v2="${b}" v3="${c}"/>`).join('')}</triangles></mesh></object>`;
+  const object=(p,i)=>`<object id="${i+2}" name="${escapeXml(p.name)}" type="model" pid="1" pindex="${i}"><mesh><vertices>${p.vertices.map(([x,y,z])=>`<vertex x="${x.toFixed(4)}" y="${y.toFixed(4)}" z="${z.toFixed(4)}"/>`).join('')}</vertices><triangles>${p.triangles.map(([a,b,c])=>`<triangle v1="${a}" v2="${b}" v3="${c}"/>`).join('')}</triangles></mesh></object>`;
   return zipSync(Object.fromEntries(Object.entries({
     '[Content_Types].xml':'<?xml version="1.0"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="model" ContentType="application/vnd.ms-package.3dmanufacturing-3dmodel+xml"/></Types>',
     '_rels/.rels':'<?xml version="1.0"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rel0" Target="/3D/3dmodel.model" Type="http://schemas.microsoft.com/3dmanufacturing/2013/01/3dmodel"/></Relationships>',
-    '3D/3dmodel.model':`<?xml version="1.0"?><model unit="millimeter" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"><resources><basematerials id="1">${parts.map(p=>`<base name="${p.name}" displaycolor="${p.color.toUpperCase()}FF"/>`).join('')}</basematerials>${parts.map(object).join('')}</resources><build>${parts.map((p,i)=>`<item objectid="${i+2}" transform="1 0 0 0 1 0 0 0 1 ${p.x.toFixed(4)} ${p.y.toFixed(4)} 0"/>`).join('')}</build></model>`
+    '3D/3dmodel.model':`<?xml version="1.0"?><model unit="millimeter" xmlns="http://schemas.microsoft.com/3dmanufacturing/core/2015/02"><resources><basematerials id="1">${parts.map(p=>`<base name="${escapeXml(p.name)}" displaycolor="${p.color.toUpperCase()}FF"/>`).join('')}</basematerials>${parts.map(object).join('')}</resources><build>${parts.map((p,i)=>`<item objectid="${i+2}" transform="1 0 0 0 1 0 0 0 1 ${(p.x ?? 0).toFixed(4)} ${(p.y ?? 0).toFixed(4)} 0"/>`).join('')}</build></model>`
   }).map(([path,value])=>[path,strToU8(value)])),{level:4});
 }

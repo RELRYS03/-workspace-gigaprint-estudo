@@ -8,3 +8,18 @@ form{display:grid;gap:11px;min-width:0}fieldset{min-width:0;margin:0;padding:14p
 .field{display:grid;gap:4px;font-size:.83rem;margin-top:8px}.field input:not([type=range]),select{min-width:0;width:100%;padding:6px 8px;border:1px solid #cad3c9;border-radius:6px;background:white;color:#25332a}.field input[type=color]{height:34px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(95px,1fr));gap:8px}.range{display:grid;grid-template-columns:auto minmax(36px,1fr) auto;align-items:center;gap:8px}.range output{min-width:3ch;text-align:right;color:#86122b}.check{font-size:.84rem;display:block;margin-top:8px}details{margin-top:10px;border-top:1px solid #e4e8e1;padding-top:8px}summary{cursor:pointer;font-size:.83rem;font-weight:650}.stack{margin-top:9px}.tip{font-size:.79rem;color:#536267;margin:5px 0}#notice{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);width:max-content;max-width:calc(100vw - 28px);padding:10px 14px;background:#243139;color:#fff;border-radius:8px;z-index:1;margin:0}#notice:empty,[hidden]{display:none!important}
 @media(max-width:760px){main{padding:20px 14px 45px}.top{padding:11px 14px}.intro{align-items:flex-start}.intro button{padding:8px 10px}.workspace{grid-template-columns:1fr}.viewer{position:static}.viewer canvas{aspect-ratio:1.45;object-fit:cover}}
 @media(max-width:390px){.intro{flex-wrap:wrap;gap:10px}}
+.top nav,.actions,.mesh-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.top nav a{color:#536267;padding:5px 8px;border-radius:6px;text-decoration:none}
+.top nav a[aria-current=page]{color:#86122b;background:#fae9ed}
+.actions #edit-ornament{background:#fff;color:#86122b;border:1px solid #dda8b4}
+.mesh-toolbar{padding:12px 16px}
+.mesh-controls{display:grid;gap:11px;min-width:0}
+.mesh-controls button,.mesh-toolbar button{background:#fff;color:#86122b;border:1px solid #dda8b4;border-radius:7px;padding:7px 10px}
+.mesh-controls button:disabled,.mesh-toolbar button:disabled{opacity:.45;cursor:default}
+.mesh-controls form{display:block;margin-top:13px;border-top:1px solid #e4e8e1;padding-top:8px}
+.mesh-controls h3{font-size:.9rem;margin:0}
+.mesh-controls form button,#mesh-copy{margin-top:9px}
+.primitive-options{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.primitive-options button span{display:block;font-size:1.45rem;color:#a21432}
+#mesh-preview{cursor:grab;touch-action:none}#mesh-message{min-height:1.45em;margin:0;color:#86122b}
+@media(max-width:580px){.top{flex-wrap:wrap}.intro{flex-wrap:wrap}}

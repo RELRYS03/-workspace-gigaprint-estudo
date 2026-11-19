@@ -2,9 +2,9 @@
 <html lang="pt-BR">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Oficina de enfeites 3D</title></head>
 <body>
-<header class="top"><span class="mark" aria-hidden="true">✦</span><strong>Oficina 3D</strong><span class="route">/ Enfeites</span></header>
+<header class="top"><span class="mark" aria-hidden="true">✦</span><strong>Oficina 3D</strong><nav aria-label="Ferramentas"><a href="#ornament">Enfeites</a><a href="#mesh">Editor de malhas</a></nav></header>
 <main id="ornament">
-  <header class="intro"><div><h1>Enfeites de Natal</h1><p>Desenhe um enfeite de malha e o molde para dar forma às duas metades.</p></div><button id="download" type="button">Baixar 3MF <span aria-hidden="true">↓</span></button></header>
+  <header class="intro"><div><h1>Enfeites de Natal</h1><p>Desenhe um enfeite de malha e o molde para dar forma às duas metades.</p></div><div class="actions"><button id="edit-ornament" type="button">Editar peças</button><button id="download" type="button">Baixar 3MF <span aria-hidden="true">↓</span></button></div></header>
   <div class="workspace">
     <section class="viewer" aria-label="Prévia do projeto">
       <div class="view-top"><strong>Prévia</strong><span id="dimensions"></span></div>
@@ -15,6 +15,48 @@
   </div>
   <p id="notice" role="status" aria-live="polite"></p>
 </main>
+<main id="mesh" hidden>
+  <header class="intro"><div><h1>Editor de malhas</h1><p>Crie uma peça ou importe um modelo STL ou 3MF.</p></div></header>
+  <div class="workspace">
+    <section class="viewer" aria-label="Prévia da malha">
+      <div class="view-top"><strong>Malha 3D</strong><span id="mesh-info">Nenhuma peça</span></div>
+      <canvas id="mesh-preview" width="840" height="620" aria-label="Prévia da malha. Arraste para girar."></canvas>
+      <div class="mesh-toolbar"><button id="mesh-undo" disabled>Desfazer</button><button id="mesh-stl" disabled>Baixar STL</button><button id="mesh-3mf" disabled>Baixar 3MF</button></div>
+    </section>
+    <div class="mesh-controls">
+      <fieldset><h2>Criar ou importar</h2>
+        <div class="primitive-options" aria-label="Criar um sólido">
+          <button data-primitive="cube"><span aria-hidden="true">⬡</span>Cubo</button>
+          <button data-primitive="cylinder"><span aria-hidden="true">▣</span>Cilindro</button>
+          <button data-primitive="sphere"><span aria-hidden="true">●</span>Esfera</button>
+        </div>
+        <label class="field">Importar STL ou 3MF<input id="mesh-file" type="file" accept=".stl,.3mf"></label>
+      </fieldset>
+      <fieldset id="mesh-edit" disabled>
+        <h2>Editar peças</h2>
+        <label class="field">Seleção<select id="mesh-selection"></select></label>
+        <button id="mesh-copy" type="button">Criar cópia da peça</button>
+        <form id="mesh-scale">
+          <h3>Dimensões finais (mm)</h3>
+          <div class="grid"><label class="field">X<input name="x" type="number" required min=".01" step="any"></label><label class="field">Y<input name="y" type="number" required min=".01" step="any"></label><label class="field">Z<input name="z" type="number" required min=".01" step="any"></label></div>
+          <label class="check"><input name="uniform" type="checkbox" checked> Manter proporções (pela dimensão X)</label>
+          <button type="submit">Aplicar tamanho</button>
+        </form>
+        <form id="mesh-cut">
+          <h3>Cortar por plano</h3>
+          <div class="grid">
+            <label class="field">Eixo<select name="axis"><option value="0">X</option><option value="1">Y</option><option value="2" selected>Z</option></select></label>
+            <label class="field">Posição (%)<input name="position" type="number" min="0.1" max="99.9" step="any" value="50" required></label>
+          </div>
+          <label class="field">Resultado<select name="mode"><option value="both">Manter os dois lados</option><option value="positive">Manter lado positivo</option><option value="negative">Manter lado negativo</option></select></label>
+          <button type="submit">Aplicar corte</button>
+        </form>
+      </fieldset>
+      <p id="mesh-message" role="status"></p>
+    </div>
+  </div>
+</main>
 <script type="module" src="/app.js"></script>
+<script type="module" src="/mesh-editor.js"></script>
 </body>
 </html>

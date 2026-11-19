@@ -1,1 +1,1 @@
-{"name":"gigaprint-estudo","version":"1.0.0","private":true,"type":"module","scripts":{"dev":"vite --host 0.0.0.0","build":"vite build","test":"node --test"},"dependencies":{"fflate":"^0.8.2"},"devDependencies":{"vite":"^7.0.0"}}
+{"name":"gigaprint-estudo","version":"1.0.0","private":true,"type":"module","scripts":{"dev":"vite --host 0.0.0.0","build":"vite build","test":"node --test"},"dependencies":{"fflate":"^0.8.2","manifold-3d":"^3.5.5","three":"^0.187.0"},"devDependencies":{"vite":"^7.0.0"}}

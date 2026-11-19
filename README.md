@@ -36,3 +36,11 @@ O HTML público do GigaPrint serviu de referência para os cinco grupos de contr
 | Celular | Exibir o formulário sem rolagem horizontal a 390 px. |
 
 Os padrões e as opções de desenhos foram selecionados para o estudo. A geometria é discretizada em uma grade, a prévia é uma projeção em Canvas e o 3MF usa materiais do padrão aberto. A compatibilidade com fatiadores específicos, o encaixe após impressão e a equivalência com a geometria do GigaPrint ainda precisam de verificação. Sem executar o editor de referência ou comparar seus arquivos, não há estimativa de cobertura.
+
+## Editor de malhas
+
+Abra **Editor de malhas** para criar um cubo, cilindro ou esfera, ou importar um STL ou 3MF. No gerador de enfeites, **Editar peças** leva as malhas geradas direto ao editor. Selecione uma peça ou a cena inteira para redimensionar, cortar ou exportar. As cópias aparecem ao lado da peça de origem. O corte pode manter os dois lados ou apenas um deles.
+
+**mesh.js** lê e grava malhas e aplica a escala aos vértices. **solid.js** usa Manifold (WebAssembly) para criar sólidos e fechar as faces do corte. **mesh-editor.js** controla a seleção, a prévia e o histórico de desfazer. A prévia usa amostragem para modelos grandes. A exportação usa todos os triângulos.
+
+O corte exige uma malha fechada e orientada. A importação 3MF lê as malhas e instâncias da mesa com suas transformações. O 3MF exportado inclui a geometria e uma cor por objeto. Perfis de fatiamento, texturas, cores por triângulo e suportes do arquivo de origem ficam fora do novo arquivo. A edição atua sobre a malha triangulada e inclui escala e corte plano.

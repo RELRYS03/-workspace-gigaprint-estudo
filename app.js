@@ -3,6 +3,7 @@ import {defaults, shapes, makeModel, contains, validate} from './geometry.js';
 
 const form=document.querySelector('#editor'), canvas=document.querySelector('#preview'), notice=document.querySelector('#notice');
 const context=canvas.getContext('2d'), download=document.querySelector('#download');
+const editOrnament=document.querySelector('#edit-ornament');
 const d=defaults;
 const options=(name,items,selected,css='')=>`<div class="segments ${css}" role="group" aria-label="${name}">${Object.entries(items).map(([id,label])=>`<label><input type="radio" name="${name}" value="${id}" ${id===selected?'checked':''}>${label}</label>`).join('')}</div>`;
 const section=(num,title,html)=>`<fieldset aria-labelledby="heading-${num}"><h2 id="heading-${num}"><span>0${num}</span>${title}</h2>${html}</fieldset>`;
@@ -142,7 +143,7 @@ function update() {
   document.querySelector('#custom-image').hidden=next.motif!=='image';
   for(const output of form.querySelectorAll('[data-out]')) output.value=next[output.dataset.out]+(output.dataset.out==='threshold'?'':'%');
   const invalid=validate(next)||(next.motif==='image'&&!image?(imageError||'Selecione uma imagem para gerar o desenho.'):'');
-  download.disabled=Boolean(invalid)||working;
+  editOrnament.disabled=download.disabled=Boolean(invalid)||working;
   if(!working) notice.textContent=invalid;
   document.querySelector('#dimensions').textContent=Number.isFinite(next.size)?`${next.size} mm`:'';
   if(invalid) { model=null;draw();return; }
@@ -168,9 +169,9 @@ canvas.addEventListener('pointermove',event=>{
   yaw+=(event.clientX-drag)*.009;drag=event.clientX;draw();
 });
 for(const event of ['pointerup','pointercancel','lostpointercapture']) canvas.addEventListener(event,()=>{drag=null;});
-download.addEventListener('click',()=>{
+function generate(edit=false){
   if(!model||working) return;
-  working=true;download.disabled=true;notice.textContent='Gerando o arquivo 3MF…';
+  working=true;editOrnament.disabled=download.disabled=true;notice.textContent=edit?'Preparando as peças…':'Gerando o arquivo 3MF…';
   const current=state, motif=motifMask;
   const raster=new Uint8Array(256**2);
   for(let y=0;y<256;y++) for(let x=0;x<256;x++) raster[y*256+x]=Number(motif((x+.5)/128-1,(y+.5)/128-1));
@@ -178,11 +179,18 @@ download.addEventListener('click',()=>{
   function finish(message) {worker.terminate();working=false;update();notice.textContent=message;}
   worker.onmessage=({data})=>{
     if(data.error) {finish('Falha ao gerar o arquivo 3MF.');return;}
+    if(edit){
+      finish('');
+      dispatchEvent(new CustomEvent('ornament-mesh',{detail:data.parts}));
+      return;
+    }
     const url=URL.createObjectURL(new Blob([data.bytes],{type:'model/3mf'}));
     const link=document.createElement('a');link.href=url;link.download=`enfeite-${current.shape}-${current.size}mm.3mf`;link.click();
     setTimeout(()=>URL.revokeObjectURL(url),1000);finish('Arquivo 3MF gerado.');
   };
   worker.onerror=()=>finish('Falha ao iniciar o exportador.');
-  worker.postMessage({state:current,raster},[raster.buffer]);
-});
+  worker.postMessage({state:current,raster,edit},[raster.buffer]);
+}
+download.addEventListener('click',()=>generate());
+editOrnament.addEventListener('click',()=>generate(true));
 update();
