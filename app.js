@@ -1,4 +1,5 @@
 import './style.css';
+import {pressDimensions} from './press.js';
 import {drawOrnament} from './ornament-preview.js';
 import {defaults, shapes, makeModel, contains, validate} from './geometry.js';
 
@@ -111,7 +112,10 @@ function draw(){
 function refreshFit(){
   const bed=bedFields.map(field=>field.valueAsNumber), gap=margin.valueAsNumber;
   const valid=bed.every(value=>Number.isFinite(value)&&value>0)&&Number.isFinite(gap)&&gap>=0;
-  const fit=valid&&model&&Math.min(...bed.slice(0,2))-gap*2>=state.size*1.08&&bed[2]>=state.size*state.depth/200+6;
+  const press=state.shape==='ball'?pressDimensions(state):null;
+  const width=press?Math.max(2*press.outer,2*press.diskRadius+(state.hanger?7:0)):state.size*1.08;
+  const height=press?press.opening:state.size*state.depth/200+6;
+  const fit=valid&&model&&Math.min(...bed.slice(0,2))-gap*2>=width&&bed[2]>=height;
   bedFit.dataset.fit=String(Boolean(fit));
   bedFit.textContent=!valid?'Informe dimensões positivas e uma margem válida.':!model?'':fit
     ?'As peças cabem individualmente na mesa.':'Uma ou mais peças excedem a área útil da impressora.';

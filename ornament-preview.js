@@ -1,10 +1,13 @@
+import {ballPress,pressDimensions} from './press.js';
+
+let moldKey, molds;
 // The canvas is a software viewport so the workbench also runs without WebGL.
 export function drawOrnament(canvas, model, state, options) {
   const ctx=canvas.getContext('2d');
   const {width:w,height:h}=canvas;
   const {yaw,pitch,zoom,view,wire,ids,reference,bed}=options;
   const cy=Math.cos(yaw), sy=Math.sin(yaw), cp=Math.cos(pitch), sp=Math.sin(pitch);
-  const unit=Math.min(w/435,h/400)*zoom;
+  const unit=Math.min(w/435,h/400)*zoom*(view==='mold'?1.35:1);
   const origin=[w*.49,h*.63];
   function project(x,y,z){
     const horizontal=cy*x-sy*y, depth=sy*x+cy*y;
@@ -28,7 +31,7 @@ export function drawOrnament(canvas, model, state, options) {
   }
   if(!model) return;
   const {n,body,flat,heights,step}=model;
-  const faces=[], labels=[];
+  const faces=[], labels=[], shades=new Map();
   function cell(p0,p1,p2,p3,color){
     const points=[p0,p1,p2,p3].map(p=>project(...p));
     const [a,b,c]=points;
@@ -37,8 +40,27 @@ export function drawOrnament(canvas, model, state, options) {
     faces.push({points,depth:points.reduce((sum,p)=>sum+p[2],0)/4,color,shade:area>0?0.15:0.05});
   }
   function piece(kind,ox,oy,oz,label){
-    labels.push([label,project(ox,oy,oz+8)]);
-    const press=kind==='male'||kind==='female';
+    const caption=view==='mold'?(kind==='female'?'Fêmea · cavidade':'Macho · ressalto'):label;
+    labels.push([caption,project(ox,oy,oz+(view==='mold'?state.size*.57:8))]);
+    const press=kind==='male'||kind==='female'||kind==='male-flipped';
+    if(press&&state.shape==='ball'){
+      const key=[state.size,state.depth,state.thickness,state.clearance,state.mode].join('/');
+      if(key!==moldKey){moldKey=key;molds=[ballPress(state,false),ballPress(state,true)];}
+      const mesh=molds[Number(kind==='female')];
+      const flip=kind==='male-flipped';
+      const pos=mesh.vertices.map(([x,y,z])=>[ox+x,oy+(flip?-y:y),oz+(flip?-z:z)]);
+      for(const triangle of mesh.triangles){
+        const [a,b,c]=triangle.map(i=>pos[i]);
+        const u=b.map((value,i)=>value-a[i]),v=c.map((value,i)=>value-a[i]);
+        const nx=u[1]*v[2]-u[2]*v[1],ny=u[2]*v[0]-u[0]*v[2],nz=u[0]*v[1]-u[1]*v[0];
+        const shade=.30-.23*Math.max(0,(-.32*nx-.43*ny+.84*nz)/(Math.hypot(nx,ny,nz)||1));
+        const points=[a,b,c].map(point=>project(...point));
+        const [p,q,r]=points;
+        if((q[0]-p[0])*(r[1]-p[1])-(q[1]-p[1])*(r[0]-p[0])>=0) continue;
+        faces.push({points,depth:points.reduce((sum,p)=>sum+p[2],0)/3,color:state.mold,shade});
+      }
+      return;
+    }
     const rigid=press||kind==='flat';
     const sign=kind==='back'||kind==='female'?-1:1;
     for(let row=0;row<n;row++) for(let col=0;col<n;col++){
@@ -68,29 +90,34 @@ export function drawOrnament(canvas, model, state, options) {
     }
   }
   const s=state.size, dome=s*state.depth/200;
+  const opening=state.shape==='ball'?pressDimensions(state).opening:dome+5;
   if(view==='combo'){
     piece('back',-s*.64,0,s*.66,'2');piece('formed',-s*.64,0,s*.66,'1');
-    piece('male',s*.49,0,5,'3');piece('flat',s*.49,0,dome+11,'4');piece('female',s*.49,0,dome*2+25,'5');
+    piece('female',s*.54,0,0,'3');piece('flat',s*.54,0,opening+9,'4');piece(state.shape==='ball'?'male-flipped':'male',s*.54,0,opening+dome+25,'5');
   }else if(view==='plate'){
     const gap=s*.57;
-    piece('flat',-gap,-gap,0,'1');piece('flat',gap,-gap,0,'2');piece('male',-gap,gap,4,'3');piece('female',gap,gap,dome+4,'4');
+    piece('flat',-gap,-gap,0,'1');piece('flat',gap,-gap,0,'2');piece('male',-gap,gap,4,'3');piece('female',gap,gap,0,'4');
   }else if(view==='ornament'){
     piece('back',0,0,s*.62,'2');piece('formed',0,0,s*.62,'1');
   }else if(view==='mold'){
-    piece('male',-s*.61,0,5,'1');piece('female',s*.61,0,dome+5,'2');
+    piece('male',-s*.61,0,5,'1');piece('female',s*.61,0,0,'2');
   }else{
     piece(view,0,0,view==='flat'?0:s*.62,'1');
   }
-  faces.sort((a,b)=>b.depth-a.depth);
+  faces.sort((a,b)=>a.depth-b.depth);
   for(const {points,color,shade} of faces){
     ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);
     for(const point of points.slice(1)) ctx.lineTo(point[0],point[1]);
     ctx.closePath();
     if(wire){ctx.strokeStyle=color;ctx.globalAlpha=.72;ctx.stroke();}
     else{
-      ctx.fillStyle=color;ctx.fill();
-      ctx.strokeStyle=color;ctx.lineWidth=.55;ctx.stroke();ctx.lineWidth=1;
-      ctx.fillStyle=`rgba(12,23,43,${shade})`;ctx.fill();
+      const light=Math.round(shade*36), key=color+light;
+      if(!shades.has(key)){
+        const rgb=[1,3,5].map(offset=>Math.round(parseInt(color.slice(offset,offset+2),16)*(1-light/36)));
+        shades.set(key,`rgb(${rgb.join(',')})`);
+      }
+      ctx.fillStyle=ctx.strokeStyle=shades.get(key);
+      ctx.fill();ctx.lineWidth=.55;ctx.stroke();ctx.lineWidth=1;
     }
     ctx.globalAlpha=1;
   }
@@ -98,7 +125,11 @@ export function drawOrnament(canvas, model, state, options) {
     ctx.font=`700 ${Math.max(11,Math.min(16,w/75))}px system-ui`;
     ctx.fillStyle='#3159d1';ctx.fillText(text,x,y);
   };
-  if(ids) for(const [label,[x,y]] of labels) quote(label,x+8,y-6);
+  if(ids||view==='mold') for(const [label,[x,y]] of labels){
+    ctx.textAlign=view==='mold'?'center':'left';
+    quote(label,x+(view==='mold'?0:8),y-6);
+  }
+  ctx.textAlign='left';
   if(reference&&view!=='plate'){
     const [x,y]=project(s*1.35,0,0), pixels=s*unit;
     if(x>12&&x<w-100){

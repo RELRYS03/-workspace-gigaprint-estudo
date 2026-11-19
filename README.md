@@ -50,3 +50,9 @@ O corte exige uma malha fechada e orientada. A importação 3MF lê as malhas e 
 Os controles ficam no painel esquerdo e a prévia ocupa a área central. Use **3D**, **Frente**, **Topo** ou **Lado** para trocar a câmera. Arraste sobre o modelo para girá-lo e use a roda para ajustar o zoom. **Arame**, **IDs** e **Ref. escala** alternam informações da prévia. No celular, a prévia vem antes do formulário.
 
 A impressora selecionada define a grade da mesa e a verificação de tamanho. O aviso avalia se cada peça cabe individualmente com a margem indicada. A visualização da mesa não otimiza o posicionamento das peças nem substitui o fatiador. O download ZIP inclui o 3MF colorido e um STL por peça.
+
+### Molde e disco da bola
+
+Na opção **Bola**, o molde macho tem um ressalto e a fêmea tem uma cavidade aberta com fundo de 4 mm. Os dois usam perfis complementares. A abertura da fêmea considera a espessura do disco, o modo de desenho elevado e a folga configurada. A vista **Molde** mostra as peças separadas na orientação de impressão, enquanto **Enfeite + molde** ilustra a montagem antes da prensagem.
+
+O disco da bola é plano. Suas barras, aro e alça são construídos com contornos vetoriais extrudados. O desenho é recortado para evitar ilhas soltas. Os testes verificam a cavidade, o encaixe geométrico sem interseção e a continuidade das barras e do aro. Impressão, aquecimento e encaixe físico ainda precisam ser testados.

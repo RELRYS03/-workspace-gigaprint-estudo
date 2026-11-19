@@ -1,3 +1,4 @@
+import {ballPress,ballSpacing,pressDimensions} from './press.js';
 import { strToU8, zipSync } from 'fflate';
 
 // Emit only the outer faces of each material. An integer grid gives neighboring
@@ -27,7 +28,7 @@ export function voxelMesh(n, nz, step, layer, sample) {
   }
   return {vertices,triangles};
 }
-export function printableParts(model,s) {
+export function printableParts(model,s,onlyPress=false) {
   const {n,step,body,flat,heights,holes}=model, layer=.4, mz=Math.ceil((s.size*.5*s.depth/100+7)/layer);
   const stock=(x,y,z)=>x>=0&&x<n&&y>=0&&y<n&&z>=0;
   const sample=(side,design)=>(x,y,z)=>{
@@ -47,13 +48,21 @@ export function printableParts(model,s) {
     const h=heights[y*n+x], base=3;
     if(!female) return z*layer<base+h;
     const cap=s.size*.5*s.depth/100+base;
-    return z*layer<cap+3 && z*layer>=Math.max(0,h+base+s.clearance);
+    const opening=cap+s.thickness+s.clearance;
+    return z*layer<opening && z*layer<=opening-h-s.thickness-s.clearance;
   };
+  const spacing=s.shape==='ball'?ballSpacing(s):n*step;
   return [
     ['Malha da frente',s.lattice,0,0,sample(0,false)],['Desenho da frente',s.design,0,0,sample(0,true)],
     ['Malha do verso',s.lattice,1,0,sample(1,false)],['Desenho do verso',s.design,1,0,sample(1,true)],
     ['Molde macho',s.mold,0,1,press(false)],['Molde fêmea',s.mold,1,1,press(true)]
-  ].map(([name,color,x,y,test])=>({name,color,x:x*n*step,y:y*n*step,...voxelMesh(n,mz,step,layer,test)})).filter(p=>p.triangles.length);
+  ].filter(([, , ,y])=>!onlyPress||y===1).map(([name,color,x,y,test])=>{
+    if(y===1&&s.shape==='ball'){
+      const mesh=ballPress(s,x===1), {outer}=pressDimensions(s);
+      return {name,color,x:x*spacing+outer,y:y*spacing+outer,...mesh};
+    }
+    return {name,color,x:x*spacing,y:y*spacing,...voxelMesh(n,mz,step,layer,test)};
+  }).filter(p=>p.triangles.length);
 }
 const escapeXml=value=>value.replace(/[&<>"']/g, character=>({
   '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&apos;'
