@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Oficina de enfeites 3D</title></head>
+<body>
+<header class="top"><span class="mark" aria-hidden="true">✦</span><strong>Oficina 3D</strong><span class="route">/ Enfeites</span></header>
+<main id="ornament">
+  <header class="intro"><div><h1>Enfeites de Natal</h1><p>Desenhe um enfeite de malha e o molde para dar forma às duas metades.</p></div><button id="download" type="button">Baixar 3MF <span aria-hidden="true">↓</span></button></header>
+  <div class="workspace">
+    <section class="viewer" aria-label="Prévia do projeto">
+      <div class="view-top"><strong>Prévia</strong><span id="dimensions"></span></div>
+      <canvas id="preview" width="840" height="710" aria-label="Visualização do enfeite e do molde"></canvas>
+      <div id="views" class="segments"></div>
+    </section>
+    <form id="editor" novalidate></form>
+  </div>
+  <p id="notice" role="status" aria-live="polite"></p>
+</main>
+<script type="module" src="/app.js"></script>
+</body>
+</html>
